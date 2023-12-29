@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/nama-database')
+mongoose.connect('mongodb://0.0.0.0:27017/Databases')
   .then(() => {
     console.log('Connected to MongoDB');
   })
