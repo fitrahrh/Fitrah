@@ -1,58 +1,35 @@
-// src/controllers/authController.js
-const express = require('express');
+const User = require('../models/User');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
-
-const register = async (req, res) => {
-  try {
-    const { email, username, password } = req.body;
-
-    // Check if the user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: 'Berhasil' });
-    }
-
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create a new user
-    const newUser = new User({ email, username, password: hashedPassword });
-    await newUser.save();
-
-    // Generate and return a token
-    const token = jwt.sign({ userId: newUser._id }, 'your-secret-key', { expiresIn: '1h' });
-    res.json({ token });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Internal Server Error' });
-  }
-};
 
 const login = async (req, res) => {
+  const { email, password } = req.body;
+
   try {
-    const { email, password } = req.body;
-
-    // Check if the user exists
+    // Cari pengguna berdasarkan email
     const user = await User.findOne({ email });
+
+    // Jika pengguna tidak ditemukan
     if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: 'Email atau password salah' });
     }
 
-    // Check if the password is correct
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+    // Verifikasi kata sandi
+    const passwordMatch = await bcrypt.compare(password, user.password);
+
+    // Jika kata sandi tidak sesuai
+    if (!passwordMatch) {
+      return res.status(401).json({ message: 'Email atau password salah' });
     }
 
-    // Generate and return a token
-    const token = jwt.sign({ userId: user._id }, 'your-secret-key', { expiresIn: '1h' });
-    res.json({ token });
+    // Buat token JWT
+    const token = jwt.sign({ userId: user._id }, 'rahasia', { expiresIn: '1h' });
+
+    // Kirim pesan validasi
+    res.status(200).json({ message: 'Login berhasil', token });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Internal Server Error' });
+    res.status(500).json({ message: 'Error dalam proses login', error });
   }
 };
 
-module.exports = { register, login };
+module.exports = { login };
